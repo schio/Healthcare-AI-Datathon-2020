@@ -2,3 +2,10 @@ __pycache__/
 .ipynb_checkpoints
 CXR/data/CXR_data
 *.pyc
+EHR/data/core
+EHR/data/hosp
+EHR/data/icu
+EHR/data/utils.py
+EHR/data/*.txt
+EHR/data/save_dir
+
