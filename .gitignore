@@ -1,4 +1,4 @@
 __pycache__ 
 .ipynb_checkpoints
-CXR/data/CXR_data
+CXR/data/CXRdata/
 *.pyc

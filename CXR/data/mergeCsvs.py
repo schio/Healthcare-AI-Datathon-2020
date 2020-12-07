@@ -57,7 +57,8 @@ def parseDiag(*args):
 
 if __name__ == '__main__':
 
-    parentDir = "CXR_data"
+    parentDir = "CXRdata"
+    metaDir   = "metaData"
     
     
     #imagePathDF
@@ -70,10 +71,12 @@ if __name__ == '__main__':
 
     # some paths
     ###############
-    metaPath  = f"{parentDir}/mimic-cxr-2.0.0-metadata.csv"
-    bioPath   = f"{parentDir}/mimic-cxr-2.0.0-negbio.csv"
-    splitPath = f"{parentDir}/mimic-cxr-2.0.0-split.csv"
-    mvPath    = f"mv.csv"
+    metaPath    = f"{parentDir}/mimic-cxr-2.0.0-metadata.csv"
+    bioPath     = f"{parentDir}/mimic-cxr-2.0.0-negbio.csv"
+    splitPath   = f"{parentDir}/mimic-cxr-2.0.0-split.csv"
+    mvPath      = f"{metaDir}/mv.csv"
+    joinedPath  = f"{metaDir}/joined.pkl"
+    
     
     meta, bio, split, mv = map(pd.read_csv)([metaPath, bioPath, splitPath, mvPath])     
     
@@ -153,6 +156,11 @@ if __name__ == '__main__':
                 
     # save
     ###############
-    f = open("joined.pkl","wb")
+    if not os.path.exists(mvPath):
+        os.makedirs(mvPath)
+        
+    f = open(joinedPath,"wb")
     pickle.dump(XS, f)
     f.close()
+    
+    

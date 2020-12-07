@@ -1,7 +1,4 @@
 import sys,os,re
-
-from glob import glob 
-
 import numpy as np
 
 from toolz         import *
@@ -12,27 +9,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 
-from utils import loadEncoder
+from utils import loadCNN, loadAR
 
-
-class model1(nn.Module):
+class baseLineNet(nn.Module):
     def __init__(self, config):
-        super(model1, self).__init__()
-                
-        # main nets
-        self.cnn  = loadEncoder(config.encoder, pretrained = False)
-        self.lstm = nn.LSTM(256 + 14, 256, 1)
+        super(baseLineNet, self).__init__()
+                        
+        self.cnn = loadCNN(config.cnn, pretrained = False)
         
-        neurons    = {"AlexNet"    : 256 ,
-                      "VGGNet"     : 512,
-                      "MobileNet"  : 1280,
-                      "SqueezeNet" : 512}
-                
-        self.fc1      = nn.Linear(neurons[config.encoder], 256)        
-        self.fc2      = nn.Linear(256, 1)
+        self.ar = loadAR(config.ar, 256 + 14, 256, 1)
+                        
+        self.fc = nn.Sequential(nn.Linear(256, 1),
+                                nn.ReLU())
         
         self.avgPool  = nn.AdaptiveAvgPool2d(1)
+        
         self.dropout  = nn.Dropout(p=0.5)
+        
+        print("loading baseLineNet ...")
 
     def forward(self,batch):
         
@@ -40,6 +34,13 @@ class model1(nn.Module):
         imgss  :: tensor(B,N,C,H,W)
         diagss :: tensor(B,N,14) we got 14 different diags
         ys     :: tensor(B)
+        
+        where
+            B : batchSize
+            N : # of time stamps 
+            C : channel size
+            H : Height
+            W : width
         
         # to be done in future,
             * add relative time as a feature.
@@ -51,22 +52,21 @@ class model1(nn.Module):
         
         # embed imageeeee yeahhhhhhhhhhh
         embedss = compose(lambda x : x.view(B,N,-1),
-                          self.fc1,
                           lambda x : x.squeeze(),
                           self.avgPool,
                           self.cnn)(imgss)
         
         # cat to emb and diag yeahhhhhhhhhhh
-        embDiagss = torch.cat([embedss.permute(1,0,-1),
-                               diagss.permute(1,0,-1)],
-                              dim = -1)
+        emb = torch.cat([embedss.permute(1,0,-1),
+                         diagss.permute(1,0,-1)],
+                        dim = -1)
         
-        #lstm yeahhhhhhhhhhh
-        os, _ = self.lstm(embDiagss)
+        #auto regress yeahhhhhhhhhhh
+        os, _ = self.ar(emb)
                         
         #logit yeahhhhhhhhhhh
         logit = compose(self.dropout,
-                        self.fc2,
+                        self.fc,
                         last)(os)
         
         return logit
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     from easydict import EasyDict
         
     config = EasyDict()
-    config.pklPath = "../data/joined.pkl"
+    config.pklPath = "../data/metaData/joined.pkl"
     
     config.L = 72 # hours
     config.W = 24 # hours
@@ -89,13 +89,14 @@ if __name__ == "__main__":
     config.batchSize  = 4
     config.numWorkers = 16    
     
-    config.encoder = "AlexNet"
+    config.cnn = "AlexNet"
+    config.ar  = "LSTM"
         
     gen = dataGen(config, augument)
     
     batch = collateFn([gen.__getitem__(i) for i in range(6)])
     
-    net = model1(config)
+    net = baseLineNet(config)
     
     net(batch)
         

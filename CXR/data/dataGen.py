@@ -32,15 +32,14 @@ class dataGen(Dataset):
     def __len__(self): 
         return len(self.dataPts)
     
-    def __getitem__(self, i):
-        
+    def __getitem__(self, i):        
            
         """
+        
         /------/------ 0|1
             W    L
         
-        """
-                
+        """                
         dataPt = self.dataPts[i]
         
         Xs     = dataPt["X"]         
@@ -83,7 +82,7 @@ if __name__ == "__main__":
     from easydict import EasyDict
     
     config = EasyDict()
-    config.pklPath = "./joined.pkl"
+    config.pklPath = "./metaData/joined.pkl"
     
     config.L = 72 # hours
     config.W = 24 # hours
